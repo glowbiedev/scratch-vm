@@ -38,6 +38,7 @@ const StringUtil = require('../util/string-util');
 const uid = require('../util/uid');
 
 const defaultBlockPackages = {
+    scratch3_ai: require('../blocks/scratch3_ai'),
     scratch3_control: require('../blocks/scratch3_control'),
     scratch3_event: require('../blocks/scratch3_event'),
     scratch3_looks: require('../blocks/scratch3_looks'),
