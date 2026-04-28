@@ -20,7 +20,7 @@ class Scratch3AIBlocks {
         this._ready = false;
         const prompt = args.PROMPT;
 
-        return fetch('https://api-kamu.com/ask-codelab', {
+        return fetch('https://glowbie-be-398118799500.asia-southeast1.run.app/ask-codelab', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prompt })
@@ -40,7 +40,7 @@ class Scratch3AIBlocks {
         const text = args.TEXT;
         const language = args.LANGUAGE;
 
-        return fetch('https://api-kamu.com/translate-codelab', {
+        return fetch('https://glowbie-be-398118799500.asia-southeast1.run.app/translate-codelab', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text, language })
