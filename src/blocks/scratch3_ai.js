@@ -12,7 +12,8 @@ class Scratch3AIBlocks {
             ai_ask:       this.askAI.bind(this),
             ai_answer:    this.getAnswer.bind(this),
             ai_translate: this.translate.bind(this),
-            ai_isready:   this.isReady.bind(this)
+            ai_isready:   this.isReady.bind(this),
+            tts:          this.speak.bind(this)
         };
     }
 
@@ -51,6 +52,17 @@ class Scratch3AIBlocks {
 
     isReady() {
         return this._ready;
+    }
+
+    speak(args) {
+        const text = args.TEXT;
+
+        return new Promise((resolve) => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.onend = () => resolve();
+            utterance.onerror = () => resolve();
+            window.speechSynthesis.speak(utterance);
+        });
     }
 }
 
