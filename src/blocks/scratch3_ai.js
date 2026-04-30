@@ -1,63 +1,61 @@
-'use strict';
-
 class Scratch3AIBlocks {
-    constructor(runtime) {
+    constructor (runtime) {
         this.runtime = runtime;
         this._answer = '';
         this._ready = false;
     }
 
-    getPrimitives() {
+    getPrimitives () {
         return {
-            ai_ask:       this.askAI.bind(this),
-            ai_answer:    this.getAnswer.bind(this),
+            ai_ask: this.askAI.bind(this),
+            ai_answer: this.getAnswer.bind(this),
             ai_translate: this.translate.bind(this),
-            ai_isready:   this.isReady.bind(this),
-            tts:          this.speak.bind(this)
+            ai_isready: this.isReady.bind(this),
+            tts: this.speak.bind(this)
         };
     }
 
-    askAI(args) {
+    askAI (args) {
         this._ready = false;
         const prompt = args.PROMPT;
 
         return fetch('https://glowbie-be-398118799500.asia-southeast1.run.app/ask-codelab', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({prompt})
         })
-        .then(res => res.json())
-        .then(data => {
-            this._answer = data.result;
-            this._ready = true;
-        });
+            .then(res => res.json())
+            .then(data => {
+                this._answer = data.result;
+                this._ready = true;
+            });
     }
 
-    getAnswer() {
+    getAnswer () {
         return this._answer;
     }
 
-    translate(args) {
+    translate (args) {
         const text = args.TEXT;
         const language = args.LANGUAGE;
 
         return fetch('https://glowbie-be-398118799500.asia-southeast1.run.app/translate-codelab', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, language })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({text, language})
         })
-        .then(res => res.json())
-        .then(data => data.result);
+            .then(res => res.json())
+            .then(data => data.result);
     }
 
-    isReady() {
+    isReady () {
         return this._ready;
     }
 
-    speak(args) {
+    speak (args) {
         const text = args.TEXT;
 
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.onend = () => resolve();
             utterance.onerror = () => resolve();
