@@ -3,6 +3,7 @@ class Scratch3AIBlocks {
         this.runtime = runtime;
         this._answer = '';
         this._ready = false;
+        this._isFetching = false;
     }
 
     getPrimitives () {
@@ -15,8 +16,27 @@ class Scratch3AIBlocks {
         };
     }
 
+    // askAI (args) {
+    //     this._ready = false;
+    //     const prompt = args.PROMPT;
+
+    //     return fetch('https://glowbie-be-398118799500.asia-southeast1.run.app/ask-codelab', {
+    //         method: 'POST',
+    //         headers: {'Content-Type': 'application/json'},
+    //         body: JSON.stringify({prompt})
+    //     })
+    //         .then(res => res.json())
+    //         .then(data => {
+    //             this._answer = data.result;
+    //             this._ready = true;
+    //         });
+    // }
+
     askAI (args) {
+        if (this._isFetching) return;
+
         this._ready = false;
+        this._isFetching = true; 
         const prompt = args.PROMPT;
 
         return fetch('https://glowbie-be-398118799500.asia-southeast1.run.app/ask-codelab', {
@@ -28,6 +48,11 @@ class Scratch3AIBlocks {
             .then(data => {
                 this._answer = data.result;
                 this._ready = true;
+                this._isFetching = false; 
+            })
+            .catch(err => {
+                console.error('AI Error:', err);
+                this._isFetching = false; 
             });
     }
 
