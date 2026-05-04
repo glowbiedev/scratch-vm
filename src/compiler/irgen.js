@@ -579,13 +579,10 @@ class ScriptTreeGenerator {
                 if (compatBlocks.inputs.includes(block.opcode)) {
                     return this.descendCompatLayerInput(block);
                 }
-                // It might be an extension block.
+                // It might be an extension or primitive-only block without block metadata.
                 const blockInfo = this.getBlockInfo(block.opcode);
-                if (blockInfo) {
-                    const type = blockInfo.info.blockType;
-                    if (type === BlockType.REPORTER || type === BlockType.BOOLEAN) {
-                        return this.descendCompatLayerInput(block);
-                    }
+                if (!blockInfo || blockInfo.info.blockType === BlockType.REPORTER || blockInfo.info.blockType === BlockType.BOOLEAN) {
+                    return this.descendCompatLayerInput(block);
                 }
             }
 
@@ -965,13 +962,10 @@ class ScriptTreeGenerator {
                 if (compatBlocks.stacked.includes(block.opcode)) {
                     return this.descendCompatLayerStack(block);
                 }
-                // It might be an extension block.
+                // It might be an extension or primitive-only block without block metadata.
                 const blockInfo = this.getBlockInfo(block.opcode);
-                if (blockInfo) {
-                    const type = blockInfo.info.blockType;
-                    if (type === BlockType.COMMAND || type === BlockType.CONDITIONAL || type === BlockType.LOOP) {
-                        return this.descendCompatLayerStack(block);
-                    }
+                if (!blockInfo || blockInfo.info.blockType === BlockType.COMMAND || blockInfo.info.blockType === BlockType.CONDITIONAL || blockInfo.info.blockType === BlockType.LOOP) {
+                    return this.descendCompatLayerStack(block);
                 }
             }
 
