@@ -36,7 +36,7 @@ class Scratch3AIBlocks {
         if (this._isFetching) return;
 
         this._ready = false;
-        this._isFetching = true; 
+        this._isFetching = true;
         const prompt = args.PROMPT;
 
         return fetch('https://glowbie-be-398118799500.asia-southeast1.run.app/ask-codelab', {
@@ -48,11 +48,11 @@ class Scratch3AIBlocks {
             .then(data => {
                 this._answer = data.result;
                 this._ready = true;
-                this._isFetching = false; 
+                this._isFetching = false;
             })
             .catch(err => {
                 console.error('AI Error:', err);
-                this._isFetching = false; 
+                this._isFetching = false;
             });
     }
 
