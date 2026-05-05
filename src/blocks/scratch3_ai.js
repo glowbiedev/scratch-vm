@@ -37,6 +37,21 @@ class Scratch3AIBlocks {
         });
     }
 
+    _waitForConnection (timeoutMs) {
+        return new Promise((resolve, reject) => {
+            if (this._socket && this._socket.connected) return resolve();
+
+            const timer = setTimeout(() => {
+                reject(new Error('Socket connection timeout'));
+            }, timeoutMs || 5000);
+
+            this._socket.once('connect', () => {
+                clearTimeout(timer);
+                resolve();
+            });
+        });
+    }
+
     askAI (args) {
         if (this._isFetching) return;
 
@@ -88,70 +103,77 @@ class Scratch3AIBlocks {
         const voiceActor = args.VOICE || 'Chirp3-HD-Aoede';
 
         return new Promise(resolve => {
-            if (!this._socket || !this._socket.connected) {
-                console.error('[TTS] Socket not connected');
+            if (!this._socket) {
+                console.error('[TTS] Socket not initialized');
                 return resolve();
             }
 
-            const audioChunks = [];
+            this._waitForConnection(5000)
+                .then(() => {
+                    const audioChunks = [];
 
-            const onAudioChunk = base64Data => {
-                const binary = atob(base64Data);
-                const bytes = new Uint8Array(binary.length);
-                for (let i = 0; i < binary.length; i++) {
-                    bytes[i] = binary.charCodeAt(i);
-                }
-                audioChunks.push(bytes.buffer);
-            };
+                    const onAudioChunk = base64Data => {
+                        const binary = atob(base64Data);
+                        const bytes = new Uint8Array(binary.length);
+                        for (let i = 0; i < binary.length; i++) {
+                            bytes[i] = binary.charCodeAt(i);
+                        }
+                        audioChunks.push(bytes.buffer);
+                    };
 
-            const onDone = () => {
-                this._socket.off('audio_chunk', onAudioChunk);
-                this._socket.off('synthesis_done', onDone);
-                this._socket.off('error', onError); // eslint-disable-line no-use-before-define
-                if (audioChunks.length === 0) return resolve();
+                    const onDone = () => {
+                        this._socket.off('audio_chunk', onAudioChunk);
+                        this._socket.off('synthesis_done', onDone);
+                        this._socket.off('error', onError); // eslint-disable-line no-use-before-define
+                        if (audioChunks.length === 0) return resolve();
 
-                const totalLength = audioChunks.reduce((sum, buf) => sum + buf.byteLength, 0);
-                const merged = new Uint8Array(totalLength);
-                let offset = 0;
-                for (const buf of audioChunks) {
-                    merged.set(new Uint8Array(buf), offset);
-                    offset += buf.byteLength;
-                }
+                        const totalLength = audioChunks.reduce((sum, buf) => sum + buf.byteLength, 0);
+                        const merged = new Uint8Array(totalLength);
+                        let offset = 0;
+                        for (const buf of audioChunks) {
+                            merged.set(new Uint8Array(buf), offset);
+                            offset += buf.byteLength;
+                        }
 
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                const audioCtx = new AudioContext();
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        const audioCtx = new AudioContext();
 
-                audioCtx.decodeAudioData(merged.buffer)
-                    .then(decoded => {
-                        const source = audioCtx.createBufferSource();
-                        source.buffer = decoded;
-                        source.connect(audioCtx.destination);
-                        source.onended = () => resolve();
-                        source.start();
-                    })
-                    .catch(err => {
-                        console.error('[TTS] Audio playback error:', err);
+                        audioCtx.decodeAudioData(merged.buffer)
+                            .then(decoded => {
+                                const source = audioCtx.createBufferSource();
+                                source.buffer = decoded;
+                                source.connect(audioCtx.destination);
+                                source.onended = () => resolve();
+                                source.start();
+                            })
+                            .catch(err => {
+                                console.error('[TTS] Audio playback error:', err);
+                                resolve();
+                            });
+                    };
+
+                    const onError = err => {
+                        this._socket.off('audio_chunk', onAudioChunk);
+                        this._socket.off('synthesis_done', onDone);
+                        this._socket.off('error', onError);
+                        console.error('[TTS] Server error:', err);
                         resolve();
+                    };
+
+                    this._socket.on('audio_chunk', onAudioChunk);
+                    this._socket.on('synthesis_done', onDone);
+                    this._socket.on('error', onError);
+
+                    this._socket.emit('synthesize_chunk', {
+                        text,
+                        lang,
+                        voice_actor: voiceActor
                     });
-            };
-
-            const onError = err => {
-                this._socket.off('audio_chunk', onAudioChunk);
-                this._socket.off('synthesis_done', onDone);
-                this._socket.off('error', onError);
-                console.error('[TTS] Server error:', err);
-                resolve();
-            };
-
-            this._socket.on('audio_chunk', onAudioChunk);
-            this._socket.on('synthesis_done', onDone);
-            this._socket.on('error', onError);
-
-            this._socket.emit('synthesize_chunk', {
-                text,
-                lang,
-                voice_actor: voiceActor
-            });
+                })
+                .catch(err => {
+                    console.error('[TTS] Connection failed:', err);
+                    resolve();
+                });
         });
     }
 }
