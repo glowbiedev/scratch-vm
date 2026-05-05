@@ -1,9 +1,8 @@
-/* global io */
-
 class Scratch3AIBlocks {
     constructor (runtime) {
         this.runtime = runtime;
         this._answer = '';
+        this._translation = '';
         this._ready = false;
         this._isFetching = false;
         this._socket = null;
@@ -14,9 +13,22 @@ class Scratch3AIBlocks {
             ai_ask: this.askAI.bind(this),
             ai_answer: this.getAnswer.bind(this),
             ai_translate: this.translate.bind(this),
+            ai_translation: this.getTranslation.bind(this),
             ai_isready: this.isReady.bind(this),
             tts: this.speak.bind(this)
         };
+    }
+
+    _loadSocketIO () {
+        return new Promise((resolve, reject) => {
+            if (typeof io !== 'undefined') return resolve();
+
+            const script = document.createElement('script');
+            script.src = 'https://cdn.socket.io/4.7.5/socket.io.min.js';
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Failed to load socket.io'));
+            document.head.appendChild(script);
+        });
     }
 
     _connectSocket () {
@@ -28,41 +40,25 @@ class Scratch3AIBlocks {
                 return;
             }
 
-            if (typeof io === 'undefined') {
-                return reject(new Error('socket.io not loaded'));
-            }
+            this._loadSocketIO()
+                .then(() => {
+                    this._socket = io('https://glowbie-be-398118799500.asia-southeast1.run.app'); // eslint-disable-line no-undef
 
-            this._socket = io('https://glowbie-be-398118799500.asia-southeast1.run.app');
+                    const timer = setTimeout(() => {
+                        reject(new Error('Socket connection timeout'));
+                    }, 5000);
 
-            const timer = setTimeout(() => {
-                reject(new Error('Socket connection timeout'));
-            }, 5000);
+                    this._socket.once('connect', () => {
+                        clearTimeout(timer);
+                        console.log('[TTS] Connected to TTS server');
+                        resolve();
+                    });
 
-            this._socket.once('connect', () => {
-                clearTimeout(timer);
-                console.log('[TTS] Connected to TTS server');
-                resolve();
-            });
-
-            this._socket.on('disconnect', () => {
-                console.warn('[TTS] Disconnected from TTS server');
-            });
-        });
-    }
-
-
-    _waitForConnection (timeoutMs) {
-        return new Promise((resolve, reject) => {
-            if (this._socket && this._socket.connected) return resolve();
-
-            const timer = setTimeout(() => {
-                reject(new Error('Socket connection timeout'));
-            }, timeoutMs || 5000);
-
-            this._socket.once('connect', () => {
-                clearTimeout(timer);
-                resolve();
-            });
+                    this._socket.on('disconnect', () => {
+                        console.warn('[TTS] Disconnected from TTS server');
+                    });
+                })
+                .catch(reject);
         });
     }
 
@@ -104,7 +100,16 @@ class Scratch3AIBlocks {
             body: JSON.stringify({text, language})
         })
             .then(res => res.json())
-            .then(data => data.result);
+            .then(data => {
+                this._translation = data.result;
+            })
+            .catch(err => {
+                console.error('[Translate] Error:', err);
+            });
+    }
+
+    getTranslation () {
+        return this._translation;
     }
 
     isReady () {
