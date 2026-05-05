@@ -7,7 +7,6 @@ class Scratch3AIBlocks {
         this._ready = false;
         this._isFetching = false;
         this._socket = null;
-        this._connectSocket();
     }
 
     getPrimitives () {
@@ -21,21 +20,36 @@ class Scratch3AIBlocks {
     }
 
     _connectSocket () {
-        if (typeof io === 'undefined') {
-            console.error('[TTS] socket.io not loaded');
-            return;
-        }
+        return new Promise((resolve, reject) => {
+            if (this._socket && this._socket.connected) return resolve();
 
-        this._socket = io('https://glowbie-be-398118799500.asia-southeast1.run.app');
+            if (this._socket) {
+                this._socket.once('connect', resolve);
+                return;
+            }
 
-        this._socket.on('connect', () => {
-            console.log('[TTS] Connected to TTS server');
-        });
+            if (typeof io === 'undefined') {
+                return reject(new Error('socket.io not loaded'));
+            }
 
-        this._socket.on('disconnect', () => {
-            console.warn('[TTS] Disconnected from TTS server');
+            this._socket = io('https://glowbie-be-398118799500.asia-southeast1.run.app');
+
+            const timer = setTimeout(() => {
+                reject(new Error('Socket connection timeout'));
+            }, 5000);
+
+            this._socket.once('connect', () => {
+                clearTimeout(timer);
+                console.log('[TTS] Connected to TTS server');
+                resolve();
+            });
+
+            this._socket.on('disconnect', () => {
+                console.warn('[TTS] Disconnected from TTS server');
+            });
         });
     }
+
 
     _waitForConnection (timeoutMs) {
         return new Promise((resolve, reject) => {
@@ -103,12 +117,7 @@ class Scratch3AIBlocks {
         const voiceActor = args.VOICE || 'Chirp3-HD-Aoede';
 
         return new Promise(resolve => {
-            if (!this._socket) {
-                console.error('[TTS] Socket not initialized');
-                return resolve();
-            }
-
-            this._waitForConnection(5000)
+            this._connectSocket()
                 .then(() => {
                     const audioChunks = [];
 
@@ -171,7 +180,7 @@ class Scratch3AIBlocks {
                     });
                 })
                 .catch(err => {
-                    console.error('[TTS] Connection failed:', err);
+                    console.error('[TTS] Connection failed:', err.message);
                     resolve();
                 });
         });
