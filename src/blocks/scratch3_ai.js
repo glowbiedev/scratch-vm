@@ -20,7 +20,7 @@ class Scratch3AIBlocks {
         };
     }
 
-    _connectSocket() {
+    _connectSocket () {
         if (typeof io === 'undefined') {
             console.error('[TTS] socket.io not loaded');
             return;
@@ -29,29 +29,13 @@ class Scratch3AIBlocks {
         this._socket = io('https://glowbie-be-398118799500.asia-southeast1.run.app');
 
         this._socket.on('connect', () => {
-            console.log('[TTS] ✅ Connected to TTS server');
+            console.log('[TTS] Connected to TTS server');
         });
 
         this._socket.on('disconnect', () => {
-            console.warn('[TTS] ⚠️ Disconnected from TTS server');
+            console.warn('[TTS] Disconnected from TTS server');
         });
     }
-
-    // askAI (args) {
-    //     this._ready = false;
-    //     const prompt = args.PROMPT;
-
-    //     return fetch('https://glowbie-be-398118799500.asia-southeast1.run.app/ask-codelab', {
-    //         method: 'POST',
-    //         headers: {'Content-Type': 'application/json'},
-    //         body: JSON.stringify({prompt})
-    //     })
-    //         .then(res => res.json())
-    //         .then(data => {
-    //             this._answer = data.result;
-    //             this._ready = true;
-    //         });
-    // }
 
     askAI (args) {
         if (this._isFetching) return;
@@ -72,7 +56,7 @@ class Scratch3AIBlocks {
                 this._isFetching = false;
             })
             .catch(err => {
-                console.error('AI Error:', err);
+                console.error('[AI] Error:', err);
                 this._isFetching = false;
             });
     }
@@ -98,23 +82,12 @@ class Scratch3AIBlocks {
         return this._ready;
     }
 
-    // speak (args) {
-    //     const text = args.TEXT;
-
-    //     return new Promise(resolve => {
-    //         const utterance = new SpeechSynthesisUtterance(text);
-    //         utterance.onend = () => resolve();
-    //         utterance.onerror = () => resolve();
-    //         window.speechSynthesis.speak(utterance);
-    //     });
-    // }
-
-    speak(args) {
+    speak (args) {
         const text = args.TEXT;
         const lang = args.LANG || 'en';
         const voiceActor = args.VOICE || 'Chirp3-HD-Aoede';
 
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             if (!this._socket || !this._socket.connected) {
                 console.error('[TTS] Socket not connected');
                 return resolve();
@@ -122,7 +95,7 @@ class Scratch3AIBlocks {
 
             const audioChunks = [];
 
-            const onAudioChunk = (base64Data) => {
+            const onAudioChunk = base64Data => {
                 const binary = atob(base64Data);
                 const bytes = new Uint8Array(binary.length);
                 for (let i = 0; i < binary.length; i++) {
@@ -131,42 +104,45 @@ class Scratch3AIBlocks {
                 audioChunks.push(bytes.buffer);
             };
 
-            const onDone = async () => {
-                cleanup();
-                if (audioChunks.length === 0) return resolve();
-
-                try {
-                    const totalLength = audioChunks.reduce((sum, buf) => sum + buf.byteLength, 0);
-                    const merged = new Uint8Array(totalLength);
-                    let offset = 0;
-                    for (const buf of audioChunks) {
-                        merged.set(new Uint8Array(buf), offset);
-                        offset += buf.byteLength;
-                    }
-
-                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    const decoded = await audioCtx.decodeAudioData(merged.buffer);
-                    const source = audioCtx.createBufferSource();
-                    source.buffer = decoded;
-                    source.connect(audioCtx.destination);
-                    source.onended = () => resolve();
-                    source.start();
-                } catch (err) {
-                    console.error('[TTS] Audio playback error:', err);
-                    resolve();
-                }
-            };
-
-            const onError = (err) => {
-                console.error('[TTS] Server error:', err);
-                cleanup();
-                resolve();
-            };
-
             const cleanup = () => {
                 this._socket.off('audio_chunk', onAudioChunk);
                 this._socket.off('synthesis_done', onDone);
                 this._socket.off('error', onError);
+            };
+
+            const onDone = () => {
+                cleanup();
+                if (audioChunks.length === 0) return resolve();
+
+                const totalLength = audioChunks.reduce((sum, buf) => sum + buf.byteLength, 0);
+                const merged = new Uint8Array(totalLength);
+                let offset = 0;
+                for (const buf of audioChunks) {
+                    merged.set(new Uint8Array(buf), offset);
+                    offset += buf.byteLength;
+                }
+
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const audioCtx = new AudioContext();
+
+                audioCtx.decodeAudioData(merged.buffer)
+                    .then(decoded => {
+                        const source = audioCtx.createBufferSource();
+                        source.buffer = decoded;
+                        source.connect(audioCtx.destination);
+                        source.onended = () => resolve();
+                        source.start();
+                    })
+                    .catch(err => {
+                        console.error('[TTS] Audio playback error:', err);
+                        resolve();
+                    });
+            };
+
+            const onError = err => {
+                console.error('[TTS] Server error:', err);
+                cleanup();
+                resolve();
             };
 
             this._socket.on('audio_chunk', onAudioChunk);
@@ -174,9 +150,9 @@ class Scratch3AIBlocks {
             this._socket.on('error', onError);
 
             this._socket.emit('synthesize_chunk', {
-                text: text,
-                lang: lang,
-                voice_actor: voiceActor,
+                text,
+                lang,
+                voice_actor: voiceActor
             });
         });
     }
