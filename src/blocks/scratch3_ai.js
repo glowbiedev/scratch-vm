@@ -142,17 +142,44 @@ class Scratch3AIBlocks {
                         if (audioChunks.length === 0) return resolve();
 
                         const totalLength = audioChunks.reduce((sum, buf) => sum + buf.byteLength, 0);
-                        const merged = new Uint8Array(totalLength);
+                        const pcm = new Uint8Array(totalLength);
                         let offset = 0;
                         for (const buf of audioChunks) {
-                            merged.set(new Uint8Array(buf), offset);
+                            pcm.set(new Uint8Array(buf), offset);
                             offset += buf.byteLength;
                         }
+
+                        const sampleRate = 24000;
+                        const numChannels = 1;
+                        const bitsPerSample = 16;
+                        const byteRate = sampleRate * numChannels * bitsPerSample / 8;
+                        const blockAlign = numChannels * bitsPerSample / 8;
+                        const wavHeader = new ArrayBuffer(44);
+                        const view = new DataView(wavHeader);
+
+                        const writeStr = (v, o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+                        writeStr(view, 0, 'RIFF');
+                        view.setUint32(4, 36 + pcm.byteLength, true);
+                        writeStr(view, 8, 'WAVE');
+                        writeStr(view, 12, 'fmt ');
+                        view.setUint32(16, 16, true);
+                        view.setUint16(20, 1, true);
+                        view.setUint16(22, numChannels, true);
+                        view.setUint32(24, sampleRate, true);
+                        view.setUint32(28, byteRate, true);
+                        view.setUint16(32, blockAlign, true);
+                        view.setUint16(34, bitsPerSample, true);
+                        writeStr(view, 36, 'data');
+                        view.setUint32(40, pcm.byteLength, true);
+
+                        const wav = new Uint8Array(44 + pcm.byteLength);
+                        wav.set(new Uint8Array(wavHeader), 0);
+                        wav.set(pcm, 44);
 
                         const AudioContext = window.AudioContext || window.webkitAudioContext;
                         const audioCtx = new AudioContext();
 
-                        audioCtx.decodeAudioData(merged.buffer)
+                        audioCtx.decodeAudioData(wav.buffer)
                             .then(decoded => {
                                 const source = audioCtx.createBufferSource();
                                 source.buffer = decoded;
