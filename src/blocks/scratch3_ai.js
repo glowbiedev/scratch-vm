@@ -104,14 +104,10 @@ class Scratch3AIBlocks {
                 audioChunks.push(bytes.buffer);
             };
 
-            const cleanup = () => {
+            const onDone = () => {
                 this._socket.off('audio_chunk', onAudioChunk);
                 this._socket.off('synthesis_done', onDone);
-                this._socket.off('error', onError);
-            };
-
-            const onDone = () => {
-                cleanup();
+                this._socket.off('error', onError); // eslint-disable-line no-use-before-define
                 if (audioChunks.length === 0) return resolve();
 
                 const totalLength = audioChunks.reduce((sum, buf) => sum + buf.byteLength, 0);
@@ -140,8 +136,10 @@ class Scratch3AIBlocks {
             };
 
             const onError = err => {
+                this._socket.off('audio_chunk', onAudioChunk);
+                this._socket.off('synthesis_done', onDone);
+                this._socket.off('error', onError);
                 console.error('[TTS] Server error:', err);
-                cleanup();
                 resolve();
             };
 
