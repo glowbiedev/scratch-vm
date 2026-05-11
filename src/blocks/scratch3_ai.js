@@ -8,6 +8,78 @@ class Scratch3AIBlocks {
         this._socket = null;
     }
 
+    getInfo () {
+        return {
+            id: 'ai',
+            name: 'AI',
+            blocks: [
+                {
+                    opcode: 'askAI',
+                    blockType: BlockType.COMMAND,
+                    text: 'ask AI [PROMPT]',
+                    arguments: {
+                        PROMPT: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'Hello!'
+                        }
+                    }
+                },
+                {
+                    opcode: 'getAnswer',
+                    blockType: BlockType.REPORTER,
+                    text: 'AI answer'
+                },
+                '---',
+                {
+                    opcode: 'translate',
+                    blockType: BlockType.COMMAND,
+                    text: 'translate [TEXT] to [LANGUAGE]',
+                    arguments: {
+                        TEXT: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'Hello'
+                        },
+                        LANGUAGE: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'Indonesian'
+                        }
+                    }
+                },
+                {
+                    opcode: 'getTranslation',
+                    blockType: BlockType.REPORTER,
+                    text: 'translation result'
+                },
+                '---',
+                {
+                    opcode: 'isReady',
+                    blockType: BlockType.BOOLEAN,
+                    text: 'AI is ready?'
+                },
+                '---',
+                {
+                    opcode: 'speak',
+                    blockType: BlockType.COMMAND,
+                    text: 'speak [TEXT] language [LANG] voice [VOICE]',
+                    arguments: {
+                        TEXT: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'Hello'
+                        },
+                        LANG: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'en'
+                        },
+                        VOICE: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'Chirp3-HD-Aoede'
+                        }
+                    }
+                }
+            ]
+        };
+    }
+
     getPrimitives () {
         return {
             ai_ask: this.askAI.bind(this),
