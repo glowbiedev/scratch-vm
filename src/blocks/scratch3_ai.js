@@ -20,7 +20,7 @@ class Scratch3AIBlocks {
             color3: '#E66E55',
             blocks: [
                 {
-                    opcode: 'ask',
+                    opcode: 'askAI',
                     blockType: BlockType.COMMAND,
                     text: 'ask AI [PROMPT]',
                     arguments: {
@@ -31,7 +31,7 @@ class Scratch3AIBlocks {
                     }
                 },
                 {
-                    opcode: 'answer',
+                    opcode: 'getAnswer',
                     blockType: BlockType.REPORTER,
                     text: 'AI answer'
                 },
@@ -52,19 +52,19 @@ class Scratch3AIBlocks {
                     }
                 },
                 {
-                    opcode: 'translation',
+                    opcode: 'getTranslation',
                     blockType: BlockType.REPORTER,
                     text: 'translation result'
                 },
                 '---',
                 {
-                    opcode: 'isready',
+                    opcode: 'isReady',
                     blockType: BlockType.BOOLEAN,
                     text: 'AI is ready?'
                 },
                 '---',
                 {
-                    opcode: 'tts',
+                    opcode: 'speak',
                     blockType: BlockType.COMMAND,
                     text: 'speak [TEXT] language [LANG] voice [VOICE]',
                     arguments: {
@@ -88,12 +88,12 @@ class Scratch3AIBlocks {
 
     getPrimitives () {
         return {
-            ai_ask: this.askAI.bind(this),
-            ai_answer: this.getAnswer.bind(this),
+            ai_askAI: this.askAI.bind(this),
+            ai_getAnswer: this.getAnswer.bind(this),
             ai_translate: this.translate.bind(this),
-            ai_translation: this.getTranslation.bind(this),
-            ai_isready: this.isReady.bind(this),
-            tts: this.speak.bind(this)
+            ai_getTranslation: this.getTranslation.bind(this),
+            ai_isReady: this.isReady.bind(this),
+            ai_speak: this.speak.bind(this)
         };
     }
 
