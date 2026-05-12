@@ -15,6 +15,9 @@ class Scratch3AIBlocks {
         return {
             id: 'ai',
             name: 'AI',
+            color1: '#FF8C75',
+            color2: '#FF7A5E',
+            color3: '#E66E55',
             blocks: [
                 {
                     opcode: 'askAI',
