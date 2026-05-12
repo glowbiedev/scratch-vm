@@ -20,7 +20,7 @@ class Scratch3AIBlocks {
             color3: '#E66E55',
             blocks: [
                 {
-                    opcode: 'askAI',
+                    opcode: 'ask',
                     blockType: BlockType.COMMAND,
                     text: 'ask AI [PROMPT]',
                     arguments: {
@@ -31,7 +31,7 @@ class Scratch3AIBlocks {
                     }
                 },
                 {
-                    opcode: 'getAnswer',
+                    opcode: 'answer',
                     blockType: BlockType.REPORTER,
                     text: 'AI answer'
                 },
@@ -52,19 +52,19 @@ class Scratch3AIBlocks {
                     }
                 },
                 {
-                    opcode: 'getTranslation',
+                    opcode: 'translation',
                     blockType: BlockType.REPORTER,
                     text: 'translation result'
                 },
                 '---',
                 {
-                    opcode: 'isReady',
+                    opcode: 'isready',
                     blockType: BlockType.BOOLEAN,
                     text: 'AI is ready?'
                 },
                 '---',
                 {
-                    opcode: 'speak',
+                    opcode: 'tts',
                     blockType: BlockType.COMMAND,
                     text: 'speak [TEXT] language [LANG] voice [VOICE]',
                     arguments: {
